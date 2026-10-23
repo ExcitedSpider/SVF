@@ -176,7 +176,8 @@ public:
 
     IntervalValue getGepElementIndex(const GepStmt* gep);
     IntervalValue getGepByteOffset(const GepStmt* gep);
-    AddressValue getGepObjAddrs(const ValVar* pointer, IntervalValue offset);
+    AddressValue getGepObjAddrs(const ValVar* pointer, IntervalValue offset,
+                              const ICFGNode* node);
 
     /// Virtual so full-sparse can layer the GepObj overlay on top.
     virtual AbstractValue loadValue(const ValVar* pointer,

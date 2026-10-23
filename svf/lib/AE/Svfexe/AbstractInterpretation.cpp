@@ -967,7 +967,7 @@ void AbstractInterpretation::updateStateOnGep(const GepStmt *gep)
 {
     const ICFGNode* node = gep->getICFGNode();
     IntervalValue offsetPair = getGepElementIndex(gep);
-    AddressValue gepAddrs = getGepObjAddrs(SVFUtil::cast<ValVar>(gep->getRHSVar()), offsetPair);
+    AddressValue gepAddrs = getGepObjAddrs(SVFUtil::cast<ValVar>(gep->getRHSVar()), offsetPair, node);
     updateAbsValue(gep->getLHSVar(), gepAddrs, node);
 }
 
