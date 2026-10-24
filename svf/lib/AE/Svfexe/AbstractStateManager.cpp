@@ -313,12 +313,16 @@ IntervalValue AbstractInterpretation::getGepByteOffset(const GepStmt* gep)
     return res;
 }
 
-AddressValue AbstractInterpretation::getGepObjAddrs(const ValVar* pointer, IntervalValue offset,
-        const ICFGNode* node)
+AddressValue AbstractInterpretation::getGepObjAddrs(const ValVar* pointer, IntervalValue offset)
 {
-    // Address calculation belongs to the current operation's state. The
-    // pointer's definition may have no state (e.g. null), or an older state
-    // that does not contain the current path's refinements.
+    const ICFGNode* node = pointer->getICFGNode();
+    if (node == nullptr)
+    {
+        // SVFIRBuilder::addNullPtrNode creates the canonical null value with
+        // no ICFG node. AE initializes constants in the global state; use
+        // the same fallback as SemiSparseAbstractInterpretation::getICFGNode.
+        node = svfir->getICFG()->getGlobalICFGNode();
+    }
     AddressValue gepAddrs;
     AbstractState& as = getAbsState(node);
     APOffset lb = offset.lb().getIntNumeral() < Options::MaxFieldLimit() ? offset.lb().getIntNumeral()

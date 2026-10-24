@@ -1,11 +1,16 @@
-# GEP operation-state regression
+# GEP missing-definition-node regression
 
-`getGepObjAddrs` must use the state at the operation being evaluated, not the
-base pointer's definition node. A null constant has no instruction definition
-with a state; using that node aborts with `No preAbsTrace for this node`.
-The explicit operation node also keeps dense pointer reads and generated
-object entries in the current state. Semi-sparse scalar reads continue to
-resolve their own definition sites through `getAbsValue`.
+`SVFIRBuilder::addNullPtrNode` explicitly creates the canonical null-pointer
+value with a null ICFG node. `ValVar::getICFGNode` returns that stored field.
+Passing it to `getAbsState` aborts with `No preAbsTrace for this node`.
+
+`getGepObjAddrs` now checks whether the pointer's definition node is null.
+When it exists, the original state lookup and address calculation are
+unchanged. Otherwise, the helper uses the global ICFG node, matching
+`SemiSparseAbstractInterpretation::getICFGNode`. AE initializes the null
+address in that global state. The existing null/black-hole address check
+then skips object creation for that address. The helper signature and all
+callers remain unchanged; no missing state is fabricated.
 
 Run with an assertions-enabled SVF build and its matching LLVM installation:
 

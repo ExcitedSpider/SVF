@@ -314,7 +314,7 @@ std::string AbsExtAPI::strRead(const ValVar* rhs, const ICFGNode* node)
     for (u32_t index = 0; index < Options::MaxFieldLimit(); index++)
     {
         AbstractValue expr0 =
-            ae->getGepObjAddrs(rhs, IntervalValue(index), node);
+            ae->getGepObjAddrs(rhs, IntervalValue(index));
 
         AbstractValue val;
         for (const auto &addr: expr0.getAddrs())
@@ -474,7 +474,7 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
     for (u32_t index = 0; index < dst_size; index++)
     {
         AbstractValue expr0 =
-            ae->getGepObjAddrs(strValue, IntervalValue(index), node);
+            ae->getGepObjAddrs(strValue, IntervalValue(index));
         AbstractValue val;
         for (const auto &addr: expr0.getAddrs())
         {
@@ -548,9 +548,9 @@ void AbsExtAPI::handleMemcpy(const ValVar *dst,
     for (u32_t index = 0; index < range_val; index++)
     {
         AbstractValue expr_src =
-            ae->getGepObjAddrs(src, IntervalValue(index), node);
+            ae->getGepObjAddrs(src, IntervalValue(index));
         AbstractValue expr_dst =
-            ae->getGepObjAddrs(dst, IntervalValue(index + start_idx), node);
+            ae->getGepObjAddrs(dst, IntervalValue(index + start_idx));
         for (const auto &dstAddr: expr_dst.getAddrs())
         {
             for (const auto &srcAddr: expr_src.getAddrs())
@@ -594,7 +594,7 @@ void AbsExtAPI::handleMemset(const ValVar *dst,
 
     for (u32_t index = 0; index < range_val; index++)
     {
-        AbstractValue lhs_gep = ae->getGepObjAddrs(dst, IntervalValue(index), node);
+        AbstractValue lhs_gep = ae->getGepObjAddrs(dst, IntervalValue(index));
         for (const auto &addr: lhs_gep.getAddrs())
         {
             u32_t objId = as.getIDFromAddr(addr);
