@@ -3,13 +3,14 @@
 This directory records an investigation of `ae -ae-sparsity=semi-sparse` on
 seven large LLVM bitcode programs: two controlled driver programs and five
 complete OSS-Fuzz targets from ARVO. It contains everything needed to rerun
-the investigation except the bitcode itself.
+the investigation, including the seven bitcode inputs.
 
 | File | Purpose |
 | --- | --- |
 | `cases.csv` | The seven cases: input file name, SHA-256, size, AE entry mode, known bad lines |
 | `run_ae.py` | Verifies each input, runs `ae`, and summarises alarms, outcome, time and peak RSS |
 | `driver.c` | Source of the planted-bug driver used by the two controlled cases |
+| `bitcode/` | The seven input bitcode files (28 MB), named as in `cases.csv` |
 
 ## Question
 
@@ -38,8 +39,8 @@ For each program:
 
 ## Inputs
 
-The bitcode is not committed. `cases.csv` pins each file by SHA-256, and
-`run_ae.py` refuses an input whose hash differs.
+The seven inputs are in `bitcode/`. `cases.csv` pins each file by SHA-256,
+and `run_ae.py` refuses an input whose hash differs.
 
 **Controlled driver cases.** `driver.c` writes one byte past a one-byte stack
 array at `driver.c:8`; `main` calls it once. The driver bitcode is linked with
@@ -70,16 +71,17 @@ libFuzzer's own entry functions.
 
 ## Reproduce
 
-With an SVF build's `ae` on `PATH` and the seven files in one directory:
+With an SVF build's `ae` on `PATH`:
 
 ```bash
-python3 docs/investigations/ae-semi-sparse-large-programs/run_ae.py <bitcode-dir> <out-dir>
+python3 docs/investigations/ae-semi-sparse-large-programs/run_ae.py <out-dir>
 ```
 
 The script prints a Markdown table like the one below, writes each full `ae`
 log to `<out-dir>/<case>.log`, and writes `<out-dir>/results.json` with every
 alarm site. Use `--only <case> ...` to run a subset, `--ae <path>` for a
-specific binary, and `--timeout <sec>` to change the per-case limit.
+specific binary, `--timeout <sec>` to change the per-case limit, and
+`--bitcode-dir <dir>` to analyse inputs stored elsewhere.
 
 ## Results
 

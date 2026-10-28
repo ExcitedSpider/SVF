@@ -2,12 +2,12 @@
 """Run `ae -ae-sparsity=semi-sparse` on every case in cases.csv and summarise the alarms.
 
 Usage:
-    run_ae.py BITCODE_DIR OUT_DIR [--ae PATH] [--timeout SEC] [--only CASE ...]
+    run_ae.py OUT_DIR [--bitcode-dir DIR] [--ae PATH] [--timeout SEC] [--only CASE ...]
 
-BITCODE_DIR must contain the files named in the `bitcode` column of cases.csv;
-each one is checked against its SHA-256 before it is analysed. For every case
-the script writes OUT_DIR/<case>.log (full ae output) and prints one Markdown
-table row. A machine-readable summary is written to OUT_DIR/results.json.
+The bitcode directory (default: bitcode/ next to this script) must contain
+the files named in the `bitcode` column of cases.csv; each one is checked
+against its SHA-256 before it is analysed. For every case the script writes
+OUT_DIR/<case>.log (full ae output) and prints one Markdown table row. A machine-readable summary is written to OUT_DIR/results.json.
 
 Alarms are collected from both the inline events ae prints while it runs and
 the final report section, so a run that crashes still reports the alarms it
@@ -101,8 +101,9 @@ def run_case(row: dict[str, str], bitcode: Path, out_dir: Path, ae: str, timeout
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("bitcode_dir", type=Path)
     parser.add_argument("out_dir", type=Path)
+    parser.add_argument("--bitcode-dir", type=Path, default=HERE / "bitcode",
+                        help="directory holding the cases.csv inputs (default: bitcode/)")
     parser.add_argument("--ae", default="ae", help="ae executable (default: ae on PATH)")
     parser.add_argument("--timeout", type=int, default=1800, help="per-case seconds")
     parser.add_argument("--only", nargs="*", help="run only these case names")
