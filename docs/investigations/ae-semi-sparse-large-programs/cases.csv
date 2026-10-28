@@ -1,0 +1,8 @@
+case,bitcode,sha256,bytes,entry,known_bad_lines
+opensc-driver-10x,opensc-driver-10x.bc,1d8139f878004d8ff460a8e1772fa62ec8519d8463ff183ef36c40520291491a,2331340,main,driver.c:8
+harfbuzz-opensc-driver-10k,harfbuzz-opensc-driver-10k.bc,7becc2b97a30268994f29156874f5b38fb7bdd34793f1b1f35e4c325df6f1fb3,7696152,main,driver.c:8
+arvo-42479504-opensc-fuzz_pkcs15_reader,42479504.l10.bc,2eb6b0ed642f26c3b5b992979982ad4eba1bca4358df3ea7e5f8d4f90d40370f,956372,no-main,pkcs15-coolkey.c:727;card-coolkey.c:1482;card-coolkey.c:391;apdu.c:515;card.c:1019;card.c:675;pkcs15-coolkey.c:568
+arvo-42539004-imagemagick-encoder_heic_fuzzer,42539004.l7.bc,f8bdaf1dd40fdca67cd0bf8f67e09c521781b3342045769e76a53dec056751ce,419900,no-main,refpic.cc:56;sps.cc:383;decctx.cc:1227;decctx.cc:636
+arvo-42498356-c-blosc2-decompress_frame_fuzzer,42498356.l12.bc,f4fc77a28074c6da27c54b1bd9089634d9f56b0d09836dbce11131026e92d540,5258576,no-main,zstd_decompress.c:772;zstd_decompress.c:972;zstd_ddict.c:173;uncompr.c:84;lz4.c:2173;frame.c:1838
+arvo-42482045-ndpi-fuzz_process_packet,42482045.l10.bc,49b401fd38b636566ced3ee3433d298eb7f5b46dc1d325a1aba02370d0a30a2e,6293544,no-main,yahoo.c:78;yahoo.c:372;ndpi_main.c:4072;ndpi_main.c:4891
+arvo-42481119-harfbuzz-hb-subset-fuzzer,42481119.l10.bc,5473f303e752113bd31104d28eee07d0ef90cf1ea64d4e63a7a749af58b7eb03,6010700,no-main,hb.hh:541;hb-open-type.hh:578;hb-algs.hh:217;hb-ot-layout-common.hh:307
