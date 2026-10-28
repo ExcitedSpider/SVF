@@ -370,8 +370,11 @@ void BufOverflowDetector::updateGepObjOffsetFromBase(const SVF::ICFGNode* node, 
                 }
                 else
                 {
-                    assert(AbstractState::isNullOrBlackHoleAddr(gepAddr) &&
-                           "GEP object is neither a GepObjVar nor an address without a backing object");
+                    // A field-insensitive base, or field 0 under FirstFieldEqBase,
+                    // resolves to the base object itself; there is no offset to record.
+                    assert((AbstractState::isNullOrBlackHoleAddr(gepAddr) ||
+                            SVFUtil::isa<BaseObjVar>(svfir->getSVFVar(gepObj))) &&
+                           "GEP object is neither a GepObjVar, a base object, nor an address without a backing object");
                 }
             }
         }
@@ -402,8 +405,9 @@ void BufOverflowDetector::updateGepObjOffsetFromBase(const SVF::ICFGNode* node, 
                 }
                 else
                 {
-                    assert(AbstractState::isNullOrBlackHoleAddr(gepAddr) &&
-                           "GEP object is neither a GepObjVar nor an address without a backing object");
+                    assert((AbstractState::isNullOrBlackHoleAddr(gepAddr) ||
+                            SVFUtil::isa<BaseObjVar>(svfir->getSVFVar(gepObj))) &&
+                           "GEP object is neither a GepObjVar, a base object, nor an address without a backing object");
                 }
             }
         }

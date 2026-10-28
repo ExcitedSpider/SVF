@@ -694,7 +694,9 @@ bool AbstractInterpretation::isBranchEdgeFeasible(const IntraCFGEdge* edge,
         AbstractState& as)
 {
     const SVFVar* cmpVar = edge->getCondition();
-    assert(!cmpVar->getInEdges().empty() && "branch condition has no defining edge?");
+    // A condition without a defining statement cannot be refined; keep the edge.
+    if (cmpVar->getInEdges().empty())
+        return true;
     if (SVFUtil::isa<CmpStmt>(*cmpVar->getInEdges().begin()))
         return isCmpBranchEdgeFeasible(edge, as);
     return isSwitchBranchEdgeFeasible(edge, as);
