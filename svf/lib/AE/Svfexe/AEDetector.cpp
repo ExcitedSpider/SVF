@@ -65,6 +65,11 @@ void BufOverflowDetector::detect(const ICFGNode* node)
                 for (const auto& addr : objAddrs)
                 {
                     NodeID objId = ae.getAbsState(node).getIDFromAddr(addr);
+                    // Null, black-hole and freed addresses (which resolve to the black
+                    // hole) have no backing object or size; dereferencing them is the
+                    // null-dereference detector's concern.
+                    if (SVFIR::isNullOrBlkObj(objId))
+                        continue;
                     u32_t size = 0;
                     u32_t lower = 0;
                     // like `int arr[10]` which has constant size before runtime
@@ -365,8 +370,11 @@ void BufOverflowDetector::updateGepObjOffsetFromBase(const SVF::ICFGNode* node, 
                 }
                 else
                 {
-                    assert(AbstractState::isNullOrBlackHoleAddr(gepAddr) &&
-                           "GEP object is neither a GepObjVar nor an address without a backing object");
+                    // A field-insensitive base, or field 0 under FirstFieldEqBase,
+                    // resolves to the base object itself; there is no offset to record.
+                    assert((AbstractState::isNullOrBlackHoleAddr(gepAddr) ||
+                            SVFUtil::isa<BaseObjVar>(svfir->getSVFVar(gepObj))) &&
+                           "GEP object is neither a GepObjVar, a base object, nor an address without a backing object");
                 }
             }
         }
@@ -397,8 +405,9 @@ void BufOverflowDetector::updateGepObjOffsetFromBase(const SVF::ICFGNode* node, 
                 }
                 else
                 {
-                    assert(AbstractState::isNullOrBlackHoleAddr(gepAddr) &&
-                           "GEP object is neither a GepObjVar nor an address without a backing object");
+                    assert((AbstractState::isNullOrBlackHoleAddr(gepAddr) ||
+                            SVFUtil::isa<BaseObjVar>(svfir->getSVFVar(gepObj))) &&
+                           "GEP object is neither a GepObjVar, a base object, nor an address without a backing object");
                 }
             }
         }
@@ -488,6 +497,9 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
     for (const auto& addr : addresses)
     {
         NodeID objId = ae.getAbsState(node).getIDFromAddr(addr);
+        // A freed address resolves to the black hole, which has no backing object.
+        if (SVFIR::isNullOrBlkObj(objId))
+            return false;
         u32_t size = 0;
         u32_t lower = 0;
         // if the object is a constant size object, get the size directly

@@ -452,6 +452,9 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
         if (AbstractState::isNullOrBlackHoleAddr(addr))
             continue;
         NodeID objId = as.getIDFromAddr(addr);
+        // A freed address resolves to the black hole, which has no backing buffer either.
+        if (SVFIR::isNullOrBlkObj(objId))
+            continue;
         if (svfir->getBaseObject(objId)->isConstantByteSize())
         {
             dst_size = svfir->getBaseObject(objId)->getByteSizeOfObj();

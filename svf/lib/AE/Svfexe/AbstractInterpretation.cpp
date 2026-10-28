@@ -528,11 +528,12 @@ void AbstractInterpretation::collectBranchRefinement(const IntraCFGEdge* edge,
     const ICFGNode* succNode = edge->getDstNode();
     s64_t succ = edge->getSuccessorCondValue();
 
-    assert(!cond->getInEdges().empty() &&
-           "branch condition has no defining edge?");
-    const SVFStmt* condDef = *cond->getInEdges().begin();
+    // The result of an external call has no defining statement; such a
+    // condition is refined by its abstract value like a switch operand.
+    const SVFStmt* condDef =
+        cond->getInEdges().empty() ? nullptr : *cond->getInEdges().begin();
 
-    if (const CmpStmt* cmpStmt = SVFUtil::dyn_cast<CmpStmt>(condDef))
+    if (const CmpStmt* cmpStmt = condDef ? SVFUtil::dyn_cast<CmpStmt>(condDef) : nullptr)
     {
         s32_t predicate = cmpStmt->getPredicate();
 
@@ -694,8 +695,10 @@ bool AbstractInterpretation::isBranchEdgeFeasible(const IntraCFGEdge* edge,
         AbstractState& as)
 {
     const SVFVar* cmpVar = edge->getCondition();
-    assert(!cmpVar->getInEdges().empty() && "branch condition has no defining edge?");
-    if (SVFUtil::isa<CmpStmt>(*cmpVar->getInEdges().begin()))
+    // The result of an external call has no defining statement; decide such a
+    // condition by its abstract value like a switch operand.
+    if (!cmpVar->getInEdges().empty() &&
+            SVFUtil::isa<CmpStmt>(*cmpVar->getInEdges().begin()))
         return isCmpBranchEdgeFeasible(edge, as);
     return isSwitchBranchEdgeFeasible(edge, as);
 }

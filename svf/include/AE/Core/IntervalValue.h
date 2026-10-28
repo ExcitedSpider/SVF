@@ -905,16 +905,17 @@ inline IntervalValue operator<<(const IntervalValue &lhs, const IntervalValue &r
         }
         else
         {
-            lb = (1 << (s32_t) shift.lb().getNumeral());
+            lb = ((s64_t) 1 << (s32_t) shift.lb().getNumeral());
         }
         BoundedInt ub = 0;
-        if (shift.ub().is_infinity())
+        // 2^63 is not representable in s64_t, so larger shifts saturate to +inf
+        if (shift.ub().is_infinity() || shift.ub().getNumeral() >= 63)
         {
             ub = IntervalValue::plus_infinity();
         }
         else
         {
-            ub = (1 << (s32_t) shift.ub().getNumeral());
+            ub = ((s64_t) 1 << (s32_t) shift.ub().getNumeral());
         }
         IntervalValue coeff(lb, ub);
         return lhs * coeff;
