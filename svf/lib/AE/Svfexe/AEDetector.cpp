@@ -498,7 +498,7 @@ bool BufOverflowDetector::detectStrcpy(const CallICFGNode *call, BufferOverflowI
     const ValVar* arg1Val = call->getArgument(1);
     auto& ae = AbstractInterpretation::getAEInstance();
     IntervalValue strLen = ae.getUtils()->getStrlen(arg1Val, call);
-    return canSafelyAccessMemory(arg0Val, strLen, call, &info);
+    return canSafelyAccessMemory(arg0Val, ae.getUtils()->getStringLastByte(call, strLen), call, &info);
 }
 
 bool BufOverflowDetector::detectStrcat(const CallICFGNode *call, BufferOverflowInfo& info)
@@ -514,7 +514,7 @@ bool BufOverflowDetector::detectStrcat(const CallICFGNode *call, BufferOverflowI
         IntervalValue strLen0 = ae.getUtils()->getStrlen(arg0Val, call);
         IntervalValue strLen1 = ae.getUtils()->getStrlen(arg1Val, call);
         IntervalValue totalLen = strLen0 + strLen1;
-        return canSafelyAccessMemory(arg0Val, totalLen, call, &info);
+        return canSafelyAccessMemory(arg0Val, ae.getUtils()->getStringLastByte(call, totalLen), call, &info);
     }
     else if (std::find(strncatGroup.begin(), strncatGroup.end(), call->getCalledFunction()->getName()) != strncatGroup.end())
     {
@@ -522,7 +522,7 @@ bool BufOverflowDetector::detectStrcat(const CallICFGNode *call, BufferOverflowI
         IntervalValue arg2Num = ae.getUtils()->getStrncatLength(call);
         IntervalValue strLen0 = ae.getUtils()->getStrlen(arg0Val, call);
         IntervalValue totalLen = strLen0 + arg2Num;
-        return canSafelyAccessMemory(arg0Val, totalLen, call, &info);
+        return canSafelyAccessMemory(arg0Val, ae.getUtils()->getStringLastByte(call, totalLen), call, &info);
     }
     else
     {
