@@ -519,8 +519,7 @@ bool BufOverflowDetector::detectStrcat(const CallICFGNode *call, BufferOverflowI
     else if (std::find(strncatGroup.begin(), strncatGroup.end(), call->getCalledFunction()->getName()) != strncatGroup.end())
     {
         const ValVar* arg0Val = call->getArgument(0);
-        const ValVar* arg2Val = call->getArgument(2);
-        IntervalValue arg2Num = ae.getAbsValue(arg2Val, call).getInterval();
+        IntervalValue arg2Num = ae.getUtils()->getStrncatLength(call);
         IntervalValue strLen0 = ae.getUtils()->getStrlen(arg0Val, call);
         IntervalValue totalLen = strLen0 + arg2Num;
         return canSafelyAccessMemory(arg0Val, totalLen, call, &info);

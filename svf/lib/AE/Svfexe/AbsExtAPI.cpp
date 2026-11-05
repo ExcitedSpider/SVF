@@ -522,10 +522,19 @@ void AbsExtAPI::handleStrncat(const CallICFGNode *call)
 {
     const ValVar* dst = call->getArgument(0);
     const ValVar* src = call->getArgument(1);
-    IntervalValue n = ae->getAbsValue(call->getArgument(2), call).getInterval();
+    IntervalValue n = getStrncatLength(call);
     IntervalValue dstLen = getStrlen(dst, call);
     assert(isValidLength(dstLen) && "getStrlen must return a bounded length");
     handleMemcpy(dst, src, n, dstLen.lb().getIntNumeral(), call);
+}
+
+IntervalValue AbsExtAPI::getStrncatLength(const CallICFGNode* call)
+{
+    IntervalValue n = ae->getAbsValue(call->getArgument(2), call).getInterval();
+    if (n.isBottom() || n.lb().leq(-1))
+        n = IntervalValue(0, IntervalValue::plus_infinity());
+    const IntervalValue source = getStrlen(call->getArgument(1), call);
+    return IntervalValue(min(n.lb(), source.lb()), min(n.ub(), source.ub()));
 }
 
 /// Core memcpy: copy `len` bytes from src to dst starting at dst[start_idx].

@@ -100,6 +100,9 @@ public:
     /// Calculate the length of a null-terminated string in abstract state.
     IntervalValue getStrlen(const ValVar *strValue, const ICFGNode* node);
 
+    /// Number of source characters appended, excluding the terminating NUL.
+    IntervalValue getStrncatLength(const CallICFGNode* call);
+
     // --- String/memory operation handlers ---
 
     void handleStrcpy(const CallICFGNode *call);
