@@ -326,6 +326,7 @@ public:
                                const ICFGNode* node, BufferOverflowInfo* info = nullptr);
 
 private:
+    IntervalValue getAllocationSize(NodeID objId);
     IntervalValue getCheckedGepByteOffset(const GepStmt* gep);
 
     /**

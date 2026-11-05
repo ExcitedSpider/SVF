@@ -843,6 +843,28 @@ void SymbolTableBuilder::initTypeInfo(ObjTypeInfo* typeinfo, const Value* val,
                                       const Type* objTy)
 {
 
+    // Detector extent metadata must not inherit the field limit, u32 type-size
+    // truncation, or the placeholder layout used for unsized types.
+    if (objTy->isSized())
+    {
+        const auto layoutSize = LLVMUtil::getDataLayout(llvmModuleSet()->getMainLLVMModule())->getTypeAllocSize(const_cast<Type*>(objTy));
+        if (!layoutSize.isScalable())
+        {
+            const u64_t bytes = layoutSize.getFixedValue();
+            if (SVFUtil::isa<GlobalVariable>(val))
+                typeinfo->allocationByteSize = bytes;
+            else if (const auto* ai = SVFUtil::dyn_cast<AllocaInst>(val))
+            {
+                if (const auto* count = SVFUtil::dyn_cast<ConstantInt>(ai->getArraySize()))
+                {
+                    if (count->getValue().getActiveBits() <= 64 &&
+                            (bytes == 0 || count->getZExtValue() <= std::numeric_limits<s64_t>::max() / bytes))
+                        typeinfo->allocationByteSize = bytes * count->getZExtValue();
+                }
+            }
+        }
+    }
+
     u32_t elemNum = 1;
     // init byteSize = 0, If byteSize is changed in the following process,
     // it means that ObjTypeInfo has a Constant Byte Size
