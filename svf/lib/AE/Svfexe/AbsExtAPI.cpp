@@ -438,61 +438,55 @@ u32_t AbsExtAPI::getBoundedMinimumByteCount(const IntervalValue& len)
 }
 
 /// Calculate the length of a null-terminated string in abstract state.
-/// Scans memory from the base of strValue looking for a '\0' byte.
-/// Returns an IntervalValue: exact length if '\0' found, otherwise [0, MaxFieldLimit].
+/// Only established nonzero cells prove a lower bound; only an established
+/// terminator proves an upper bound. The field limit is a scan budget, never
+/// evidence that the string terminates there.
 IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
 {
     AbstractState& as = getAbsState(node);
-    // Step 1: determine the buffer size (in bytes) backing this pointer
-    u32_t dst_size = 0;
+    const IntervalValue unknown(0, IntervalValue::plus_infinity());
+    IntervalValue result = IntervalValue::bottom();
     const AbstractValue& ptrVal = ae->getAbsValue(strValue, node);
+    if (!ptrVal.isAddr() || ptrVal.getAddrs().empty())
+        return unknown;
     for (const auto& addr : ptrVal.getAddrs())
     {
-        // Unknown and null pointers have no concrete backing buffer to inspect.
         if (AbstractState::isNullOrBlackHoleAddr(addr))
+        {
+            result.join_with(unknown);
             continue;
-        NodeID objId = as.getIDFromAddr(addr);
-        if (svfir->getBaseObject(objId)->isConstantByteSize())
-        {
-            dst_size = svfir->getBaseObject(objId)->getByteSizeOfObj();
         }
-        else
+        const NodeID objId = as.getIDFromAddr(addr);
+        const BaseObjVar* base = svfir->getBaseObject(objId);
+        const auto* gep = SVFUtil::dyn_cast<GepObjVar>(svfir->getSVFVar(objId));
+        const APOffset start = gep ? gep->getConstantFieldIdx() : 0;
+        u32_t lower = 0;
+        bool nonzeroPrefix = true;
+        IntervalValue length = unknown;
+        for (u32_t index = 0; index < Options::MaxFieldLimit(); ++index)
         {
-            const ICFGNode* icfgNode = svfir->getBaseObject(objId)->getICFGNode();
-            for (const SVFStmt* stmt2: icfgNode->getSVFStmts())
+            // Do not interpret a field-insensitive, wrapped or capped cell as
+            // a concrete character at this index.
+            if (start < 0 || start + index >= base->getMaxFieldOffsetLimit() ||
+                    start + index >= Options::MaxFieldLimit())
+                break;
+            const NodeID field = svfir->getGepObjVar(objId, index);
+            const AbstractValue& cell = as.load(AbstractState::getVirtualMemAddress(field));
+            if (cell.isInterval() && !cell.isAddr() && cell.getInterval().is_zero())
             {
-                if (const AddrStmt* addrStmt = SVFUtil::dyn_cast<AddrStmt>(stmt2))
-                {
-                    dst_size = ae->getAllocaInstByteSize(addrStmt).upperBound;
-                }
+                length = IntervalValue(lower, index);
+                break;
             }
+            if (!cell.isInterval() || cell.isAddr() || cell.getInterval().isBottom() ||
+                    cell.getInterval().contains(0))
+                nonzeroPrefix = false;
+            if (nonzeroPrefix)
+                ++lower;
+            length = IntervalValue(lower, IntervalValue::plus_infinity());
         }
+        result.join_with(length);
     }
-
-    // Step 2: scan for '\0' terminator
-    u32_t len = 0;
-    for (u32_t index = 0; index < dst_size; index++)
-    {
-        AbstractValue expr0 =
-            ae->getGepObjAddrs(strValue, IntervalValue(index));
-        AbstractValue val;
-        for (const auto &addr: expr0.getAddrs())
-        {
-            val.join_with(as.load(addr));
-        }
-        if (val.getInterval().is_numeral() &&
-                (char) val.getInterval().getIntNumeral() == '\0')
-        {
-            break;
-        }
-        ++len;
-    }
-
-    // Step 3: scale by element size and return
-    u32_t elemSize = getElementSize(strValue);
-    if (len == 0)
-        return IntervalValue((s64_t)0, (s64_t)Options::MaxFieldLimit());
-    return IntervalValue(len * elemSize);
+    return result * IntervalValue(getElementSize(strValue));
 }
 
 // ===----------------------------------------------------------------------===//
