@@ -590,7 +590,9 @@ void SemiSparseAbstractInterpretation::updateAbsValue(const ValVar* var,
 {
     // Write to the var's def-site so getAbsValue stays consistent.
     const ICFGNode* defNode = var->getICFGNode();
-    abstractTrace[defNode ? defNode : node][var->getId()] = val;
+    // Node-less synthetic temporaries use the same home as node-less reads.
+    abstractTrace[defNode ? defNode : svfir->getICFG()->getGlobalICFGNode()]
+        [var->getId()] = val;
 }
 
 const AbstractValue& SemiSparseAbstractInterpretation::getAbsValue(
