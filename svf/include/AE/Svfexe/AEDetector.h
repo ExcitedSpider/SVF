@@ -202,7 +202,11 @@ public:
      */
     void addToGepObjOffsetFromBase(const GepObjVar* obj, const IntervalValue& offset)
     {
-        gepObjOffsetFromBase[obj] = offset;
+        auto it = gepObjOffsetFromBase.find(obj);
+        if (it == gepObjOffsetFromBase.end())
+            gepObjOffsetFromBase.emplace(obj, offset);
+        else
+            it->second.join_with(offset);
     }
 
     /**
@@ -226,8 +230,7 @@ public:
             return gepObjOffsetFromBase.at(obj);
         else
         {
-            assert(false && "GepObjVar not found in gepObjOffsetFromBase");
-            abort();
+            return IntervalValue::top();
         }
     }
 
@@ -323,6 +326,8 @@ public:
                                const ICFGNode* node, BufferOverflowInfo* info = nullptr);
 
 private:
+    IntervalValue getCheckedGepByteOffset(const GepStmt* gep);
+
     /**
      * @brief Detects buffer overflow in 'strcat' function calls.
      * @param call Pointer to the call ICFG node.
