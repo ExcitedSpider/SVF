@@ -31,6 +31,7 @@
 #define INCLUDE_SVFIR_OBJTYPEINFO_H_
 
 #include "Util/GeneralType.h"
+#include <optional>
 
 namespace SVF
 {
@@ -74,7 +75,11 @@ private:
     u32_t elemNum;
 
     /// Byte size of object
-    u32_t byteSize;
+    u32_t byteSize = 0;
+
+    /// Uncapped constant allocation extent for sized stack/global objects.
+    /// Separate from byteSize and the field-sensitive memory model.
+    std::optional<u64_t> allocationByteSize;
 
     inline void resetTypeForHeapStaticObj(const SVFType* t)
     {
@@ -82,6 +87,11 @@ private:
         type = t;
     }
 public:
+
+    const std::optional<u64_t>& getAllocationByteSize() const
+    {
+        return allocationByteSize;
+    }
 
     /// Constructors
     ObjTypeInfo(const SVFType* t, u32_t max) : type(t), flags(0), maxOffsetLimit(max), elemNum(max)

@@ -141,9 +141,8 @@ class BufOverflowDetector : public AEDetector
 public:
     struct BufferOverflowInfo
     {
-        u32_t bufferSize = 0;
-        u32_t bufferLowerBound = 0;
-        IntervalValue accessOffset = IntervalValue(0);
+        IntervalValue bufferSize = IntervalValue(0, IntervalValue::plus_infinity());
+        IntervalValue accessOffset = IntervalValue::top();
     };
 
     /**
@@ -203,7 +202,11 @@ public:
      */
     void addToGepObjOffsetFromBase(const GepObjVar* obj, const IntervalValue& offset)
     {
-        gepObjOffsetFromBase[obj] = offset;
+        auto it = gepObjOffsetFromBase.find(obj);
+        if (it == gepObjOffsetFromBase.end())
+            gepObjOffsetFromBase.emplace(obj, offset);
+        else
+            it->second.join_with(offset);
     }
 
     /**
@@ -227,8 +230,7 @@ public:
             return gepObjOffsetFromBase.at(obj);
         else
         {
-            assert(false && "GepObjVar not found in gepObjOffsetFromBase");
-            abort();
+            return IntervalValue::top();
         }
     }
 
@@ -279,8 +281,8 @@ public:
 
         // Add the bug to the recorder with details from the event stack
         recoder.addAbsExecBug(GenericBug::FULLBUFOVERFLOW, eventStack,
-                              info.bufferLowerBound, info.bufferSize,
-                              info.accessOffset.lb().getNumeral(), info.accessOffset.ub().getNumeral());
+                              info.bufferSize.lb(), info.bufferSize.ub(),
+                              info.accessOffset.lb(), info.accessOffset.ub());
         nodeToBugInfo[node] = e.what(); // Record the exception information for the node
     }
 
@@ -324,6 +326,9 @@ public:
                                const ICFGNode* node, BufferOverflowInfo* info = nullptr);
 
 private:
+    IntervalValue getAllocationSize(NodeID objId);
+    IntervalValue getCheckedGepByteOffset(const GepStmt* gep);
+
     /**
      * @brief Detects buffer overflow in 'strcat' function calls.
      * @param call Pointer to the call ICFG node.
