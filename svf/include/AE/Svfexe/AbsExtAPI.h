@@ -88,8 +88,12 @@ public:
 
     // --- Shared primitives used by string/memory handlers ---
 
-    /// Get the byte size of each element for a pointer/array variable.
+    /// Get the modeled scalar element's byte size; zero means unestablished.
     u32_t getElementSize(const ValVar* var);
+    u32_t getElementSize(const ValVar* var, const ICFGNode* node);
+
+    /// Convert a string character count (including NUL) to a last byte.
+    IntervalValue getStringLastByte(const CallICFGNode* call, const IntervalValue& length);
 
     /// Check if an interval length is usable (not bottom, not unbounded).
     static bool isValidLength(const IntervalValue& len);
@@ -97,8 +101,13 @@ public:
     /// Return the lower bound of len, capped by the field limit.
     static u32_t getBoundedMinimumByteCount(const IntervalValue& len);
 
-    /// Calculate the length of a null-terminated string in abstract state.
+    /// Calculate a string length in elements, excluding the terminator.
     IntervalValue getStrlen(const ValVar *strValue, const ICFGNode* node);
+
+    /// Number of source characters appended, excluding the terminating NUL.
+    IntervalValue getStrncatLength(const CallICFGNode* call);
+    void handleStringCopy(const CallICFGNode* call, const IntervalValue& length,
+                          const IntervalValue& start);
 
     // --- String/memory operation handlers ---
 
