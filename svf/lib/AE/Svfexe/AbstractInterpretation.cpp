@@ -765,11 +765,31 @@ bool AbstractInterpretation::handleICFGNode(const ICFGNode* node)
     stat->getBlockTrace()++;
     stat->getICFGNodeTrace()++;
 
-    // Handle SVF statements
+    // String APIs have dedicated AE memory semantics. The pointer-analysis
+    // copies are zero-based (also for strcat), so executing both would destroy
+    // the destination prefix before either the handler or detector measures it.
+    const auto* callNode = SVFUtil::dyn_cast<CallICFGNode>(node);
+    bool modeledString = false;
+    if (callNode && callNode->getCalledFunction())
+        for (const auto& annotation : ExtAPI::getExtAPI()->getExtFuncAnnotations(
+                    callNode->getCalledFunction()))
+            modeledString |= annotation.find("STRCPY") != std::string::npos ||
+                             annotation.find("STRCAT") != std::string::npos;
+
+    // Keep non-memory statements, including the returned destination alias.
     for (const SVFStmt *stmt: node->getSVFStmts())
     {
+        if (modeledString && (SVFUtil::isa<GepStmt>(stmt) ||
+                              SVFUtil::isa<LoadStmt>(stmt) ||
+                              SVFUtil::isa<StoreStmt>(stmt)))
+            continue;
         handleSVFStatement(stmt);
     }
+
+    // Check string operands in the pre-operation state, before appending.
+    if (modeledString)
+        for (auto& detector : detectors)
+            detector->detect(node);
 
     // Handle call sites
     if (const CallICFGNode* callNode = SVFUtil::dyn_cast<CallICFGNode>(node))
@@ -778,8 +798,9 @@ bool AbstractInterpretation::handleICFGNode(const ICFGNode* node)
     }
 
     // Run detectors
-    for (auto& detector: detectors)
-        detector->detect(node);
+    if (!modeledString)
+        for (auto& detector: detectors)
+            detector->detect(node);
     stat->countStateSize();
 
     // Track this node as analyzed (for coverage statistics across all entry points)
