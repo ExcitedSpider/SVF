@@ -176,7 +176,7 @@ public:
 
     IntervalValue getGepElementIndex(const GepStmt* gep);
     IntervalValue getGepByteOffset(const GepStmt* gep);
-    AddressValue getGepObjAddrs(const ValVar* pointer, IntervalValue offset);
+    AddressValue getGepObjAddrs(const ValVar* pointer, IntervalValue offset, const ICFGNode* node);
 
     /// Read memory through the pointer's address targets.
     virtual AbstractValue loadValue(const ValVar* pointer,
