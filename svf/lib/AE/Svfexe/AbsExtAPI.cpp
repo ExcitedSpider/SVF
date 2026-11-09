@@ -413,10 +413,11 @@ u32_t AbsExtAPI::getElementSize(const ValVar* var, const ICFGNode* node)
         return 0;
     for (auto addr : pointer.getAddrs())
     {
-        if (AbstractState::isNullOrBlackHoleAddr(addr))
+        // A freed address also resolves to the blackhole object.
+        const NodeID objId = getAbsState(node).getIDFromAddr(addr);
+        if (svfir->isNullOrBlkObj(objId))
             return 0;
-        const SVFType* type = svfir->getBaseObject(
-                                  getAbsState(node).getIDFromAddr(addr))->getType();
+        const SVFType* type = svfir->getBaseObject(objId)->getType();
         while (const auto* array = SVFUtil::dyn_cast<SVFArrayType>(type))
             type = array->getTypeOfElement();
         if (!SVFUtil::isa<SVFIntegerType>(type) || type->getByteSize() == 0 ||
@@ -486,12 +487,13 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
         return unknown;
     for (const auto& addr : ptrVal.getAddrs())
     {
-        if (AbstractState::isNullOrBlackHoleAddr(addr))
+        const NodeID objId = as.getIDFromAddr(addr);
+        // A freed address also resolves to the blackhole object.
+        if (svfir->isNullOrBlkObj(objId))
         {
             result.join_with(unknown);
             continue;
         }
-        const NodeID objId = as.getIDFromAddr(addr);
         const BaseObjVar* base = svfir->getBaseObject(objId);
         const auto* gep = SVFUtil::dyn_cast<GepObjVar>(svfir->getSVFVar(objId));
         const APOffset start = gep ? gep->getConstantFieldIdx() : 0;
