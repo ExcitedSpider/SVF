@@ -313,10 +313,8 @@ IntervalValue AbstractInterpretation::getGepByteOffset(const GepStmt* gep)
     return res;
 }
 
-/// Resolve the GEP object addresses of `pointer` + `offset` as seen at
-/// `node`, the ICFG node evaluating the GEP.  The pointer's own def-site
-/// node cannot be used: constant operands such as `ptr null` have no
-/// ICFGNode, so there is no trace entry to look up.
+/// Resolve the GEP object addresses of `pointer` + `offset` as seen at 
+/// `node`, the ICFG node evaluating the GEP.
 AddressValue AbstractInterpretation::getGepObjAddrs(const ValVar* pointer, IntervalValue offset, const ICFGNode* node)
 {
     AddressValue gepAddrs;
