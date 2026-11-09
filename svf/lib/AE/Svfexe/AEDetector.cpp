@@ -157,7 +157,7 @@ void BufOverflowDetector::detect(const ICFGNode* node)
                 if (hasUnknownSizeTarget)
                     addBugToReporter(AEException(stmt->toString()), node,
                                      {IntervalValue(0, IntervalValue::plus_infinity()),
-                                      ae.getGepByteOffset(gep)});
+                                      getCheckedGepByteOffset(gep)});
             }
         }
     }
