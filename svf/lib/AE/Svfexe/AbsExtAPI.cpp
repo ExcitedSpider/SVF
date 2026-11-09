@@ -486,12 +486,13 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
         return unknown;
     for (const auto& addr : ptrVal.getAddrs())
     {
-        if (AbstractState::isNullOrBlackHoleAddr(addr))
+        const NodeID objId = as.getIDFromAddr(addr);
+        // A freed address also resolves to the blackhole object.
+        if (svfir->isNullOrBlkObj(objId))
         {
             result.join_with(unknown);
             continue;
         }
-        const NodeID objId = as.getIDFromAddr(addr);
         const BaseObjVar* base = svfir->getBaseObject(objId);
         const auto* gep = SVFUtil::dyn_cast<GepObjVar>(svfir->getSVFVar(objId));
         const APOffset start = gep ? gep->getConstantFieldIdx() : 0;
