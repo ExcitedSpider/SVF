@@ -204,12 +204,7 @@ void AbsExtAPI::initExtFunMap()
     {
         assert(callNode->arg_size() >= 1 && "strlen expects one argument");
         const SVFVar* retVar = callNode->getRetICFGNode()->getActualRet();
-        IntervalValue byteLen = getStrlen(callNode->getArgument(0), callNode);
-        u32_t elemSize = getElementSize(callNode->getArgument(0));
-        if (byteLen.is_numeral() && elemSize > 1)
-            ae->updateAbsValue(retVar, IntervalValue(byteLen.getIntNumeral() / (s64_t)elemSize), callNode);
-        else
-            ae->updateAbsValue(retVar, byteLen, callNode);
+        ae->updateAbsValue(retVar, getStrlen(callNode->getArgument(0), callNode), callNode);
     };
     func_map["strlen"] = sse_strlen;
     func_map["wcslen"] = sse_strlen;
@@ -407,15 +402,49 @@ void AbsExtAPI::handleExtAPI(const CallICFGNode *call)
 /// Shared by handleMemcpy, handleMemset, and getStrlen to avoid duplication.
 u32_t AbsExtAPI::getElementSize(const ValVar* var)
 {
-    if (var->getType()->isArrayTy())
+    return getElementSize(var, var->getICFGNode());
+}
+
+u32_t AbsExtAPI::getElementSize(const ValVar* var, const ICFGNode* node)
+{
+    u32_t width = 0;
+    const AbstractValue& pointer = ae->getAbsValue(var, node);
+    if (!pointer.isAddr() || pointer.getAddrs().empty())
+        return 0;
+    for (auto addr : pointer.getAddrs())
     {
-        return SVFUtil::dyn_cast<SVFArrayType>(var->getType())
-               ->getTypeOfElement()->getByteSize();
+        // A freed address also resolves to the blackhole object.
+        const NodeID objId = getAbsState(node).getIDFromAddr(addr);
+        if (svfir->isNullOrBlkObj(objId))
+            return 0;
+        const SVFType* type = svfir->getBaseObject(objId)->getType();
+        while (const auto* array = SVFUtil::dyn_cast<SVFArrayType>(type))
+            type = array->getTypeOfElement();
+        if (!SVFUtil::isa<SVFIntegerType>(type) || type->getByteSize() == 0 ||
+                (width && width != type->getByteSize()))
+            return 0;
+        width = type->getByteSize();
     }
-    if (var->getType()->isPointerTy())
-        return 1;
-    assert(false && "unsupported type for element size");
-    return 1;
+    return width;
+}
+
+IntervalValue AbsExtAPI::getStringLastByte(const CallICFGNode* call,
+        const IntervalValue& length)
+{
+    IntervalValue width(1);
+    if (call->getCalledFunction()->getName().find("wcs") != std::string::npos)
+    {
+        // An i8 allocation can be raw storage for wide characters (alloca
+        // lowered to bytes). It does not establish the wchar_t width.
+        const u32_t dstElement = getElementSize(call->getArgument(0), call);
+        const u32_t srcElement = getElementSize(call->getArgument(1), call);
+        const u32_t dstWidth = dstElement > 1 ? dstElement : 0;
+        const u32_t srcWidth = srcElement > 1 ? srcElement : 0;
+        width = (dstWidth || srcWidth) && (!dstWidth || !srcWidth || dstWidth == srcWidth)
+                ? IntervalValue(dstWidth ? dstWidth : srcWidth)
+                : IntervalValue(1, IntervalValue::plus_infinity());
+    }
+    return (length + IntervalValue(1)) * width - IntervalValue(1);
 }
 
 /// Check if an interval length is usable for memory operations.
@@ -447,6 +476,13 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
     const IntervalValue unknown(0, IntervalValue::plus_infinity());
     IntervalValue result = IntervalValue::bottom();
     const AbstractValue& ptrVal = ae->getAbsValue(strValue, node);
+    // A narrow string traverses bytes. Larger flattened scalar cells cannot
+    // establish its character lengths (e.g. a char* cast of an i32 array).
+    if (const auto* call = SVFUtil::dyn_cast<CallICFGNode>(node))
+        if (call->getCalledFunction() &&
+                call->getCalledFunction()->getName().find("wcs") == std::string::npos &&
+                getElementSize(strValue, node) != 1)
+            return unknown;
     if (!ptrVal.isAddr() || ptrVal.getAddrs().empty())
         return unknown;
     for (const auto& addr : ptrVal.getAddrs())
@@ -487,7 +523,7 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
         }
         result.join_with(length);
     }
-    return result * IntervalValue(getElementSize(strValue));
+    return result;
 }
 
 // ===----------------------------------------------------------------------===//
@@ -498,11 +534,10 @@ IntervalValue AbsExtAPI::getStrlen(const ValVar *strValue, const ICFGNode* node)
 /// Covers: strcpy, __strcpy_chk, stpcpy, wcscpy, __wcscpy_chk
 void AbsExtAPI::handleStrcpy(const CallICFGNode *call)
 {
-    const ValVar* dst = call->getArgument(0);
     const ValVar* src = call->getArgument(1);
     IntervalValue srcLen = getStrlen(src, call);
     assert(isValidLength(srcLen) && "getStrlen must return a bounded length");
-    handleMemcpy(dst, src, srcLen, 0, call);
+    handleStringCopy(call, srcLen, IntervalValue(0));
 }
 
 /// strcat(dst, src): append all of src after the end of dst.
@@ -514,19 +549,72 @@ void AbsExtAPI::handleStrcat(const CallICFGNode *call)
     IntervalValue dstLen = getStrlen(dst, call);
     IntervalValue srcLen = getStrlen(src, call);
     assert(isValidLength(dstLen) && "getStrlen must return a bounded length");
-    handleMemcpy(dst, src, srcLen, dstLen.lb().getIntNumeral(), call);
+    handleStringCopy(call, srcLen, dstLen);
 }
 
-/// strncat(dst, src, n): append at most n bytes of src after the end of dst.
+/// strncat(dst, src, n): append at most n characters after the end of dst.
 /// Covers: strncat, __strncat_chk, wcsncat, __wcsncat_chk
 void AbsExtAPI::handleStrncat(const CallICFGNode *call)
 {
     const ValVar* dst = call->getArgument(0);
-    const ValVar* src = call->getArgument(1);
-    IntervalValue n = ae->getAbsValue(call->getArgument(2), call).getInterval();
+    IntervalValue n = getStrncatLength(call);
     IntervalValue dstLen = getStrlen(dst, call);
     assert(isValidLength(dstLen) && "getStrlen must return a bounded length");
-    handleMemcpy(dst, src, n, dstLen.lb().getIntNumeral(), call);
+    handleStringCopy(call, n, dstLen);
+}
+
+// String lengths and field indices are elements. In particular, include the
+// terminating element here; byte scaling belongs only at the detector boundary.
+void AbsExtAPI::handleStringCopy(const CallICFGNode* call,
+        const IntervalValue& length, const IntervalValue& start)
+{
+    const ValVar* dst = call->getArgument(0);
+    const ValVar* src = call->getArgument(1);
+    AbstractState& as = getAbsState(call);
+    const bool precise = length.is_numeral() && start.is_numeral();
+    for (u32_t index = 0; index < Options::MaxFieldLimit(); ++index)
+    {
+        AbstractValue value(IntervalValue::top());
+        u32_t destination = index;
+        if (precise)
+        {
+            if (index > length.getIntNumeral() ||
+                    start.getIntNumeral() + index >= Options::MaxFieldLimit())
+                break;
+            destination += start.getIntNumeral();
+            if (index == length.getIntNumeral())
+                value = IntervalValue(0);
+            else
+            {
+                value = AbstractValue();
+                for (auto addr : ae->getGepObjAddrs(src, IntervalValue(index)))
+                    value.join_with(as.load(addr));
+                if (!value.isInterval() || value.isAddr())
+                    value = IntervalValue::top();
+            }
+        }
+        // An uncertain append position cannot justify a strong copy at its
+        // lower bound. Forget possible destination contents instead.
+        else if (index < start.lb().getIntNumeral())
+            continue;
+        const AddressValue targets = ae->getGepObjAddrs(dst, IntervalValue(destination));
+        for (auto addr : targets)
+        {
+            AbstractValue stored = value;
+            if (ae->getAbsValue(dst, call).getAddrs().size() != 1)
+                stored.join_with(as.load(addr));
+            as.store(addr, stored);
+        }
+    }
+}
+
+IntervalValue AbsExtAPI::getStrncatLength(const CallICFGNode* call)
+{
+    IntervalValue n = ae->getAbsValue(call->getArgument(2), call).getInterval();
+    if (n.isBottom() || n.lb().leq(-1))
+        n = IntervalValue(0, IntervalValue::plus_infinity());
+    const IntervalValue source = getStrlen(call->getArgument(1), call);
+    return IntervalValue(min(n.lb(), source.lb()), min(n.ub(), source.ub()));
 }
 
 /// Core memcpy: copy `len` bytes from src to dst starting at dst[start_idx].
@@ -536,7 +624,9 @@ void AbsExtAPI::handleMemcpy(const ValVar *dst,
 {
     AbstractState& as = getAbsState(node);
 
-    u32_t elemSize = getElementSize(dst);
+    u32_t elemSize = getElementSize(dst, node);
+    if (elemSize == 0)
+        return;
     u32_t size = getBoundedMinimumByteCount(len);
     u32_t range_val = size / elemSize;
 
