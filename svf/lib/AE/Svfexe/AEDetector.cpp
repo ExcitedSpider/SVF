@@ -33,6 +33,48 @@
 #include <algorithm>
 
 using namespace SVF;
+
+IntervalValue BufOverflowDetector::getCheckedGepByteOffset(const GepStmt* gep)
+{
+    auto& ae = AbstractInterpretation::getAEInstance();
+    IntervalValue result(0);
+    for (const auto& pair : gep->getOffsetVarAndGepTypePairVec())
+    {
+        const auto* type = pair.second;
+        if (const auto* structure = SVFUtil::dyn_cast<SVFStructType>(type))
+        {
+            result = result + IntervalValue(gep->getAccessPath().getStructFieldOffset(pair.first, structure));
+            continue;
+        }
+        u32_t bytes = 0;
+        if (const auto* array = SVFUtil::dyn_cast<SVFArrayType>(type))
+            bytes = array->getTypeOfElement()->getByteSize();
+        else if (SVFUtil::isa<SVFPointerType>(type))
+            bytes = gep->getAccessPath().gepSrcPointeeType()->getByteSize();
+        if (!bytes) return IntervalValue::top();
+        const auto* constant = SVFUtil::dyn_cast<ConstIntValVar>(pair.first);
+        if (constant)
+        {
+            const s64_t index = constant->getSExtValue();
+            if (index > std::numeric_limits<s64_t>::max() / bytes ||
+                    index < std::numeric_limits<s64_t>::min() / bytes)
+                return IntervalValue::top();
+            result = result + IntervalValue(index * bytes);
+            continue;
+        }
+        auto index = ae.getAbsValue(pair.first, gep->getICFGNode()).getInterval();
+        if (index.isBottom()) return IntervalValue::top();
+        const s64_t limit = Options::MaxFieldLimit() / bytes;
+        // The field-model cap does not bound a physical access offset.
+        BoundedInt lower = index.lb(), upper = index.ub();
+        if (lower < BoundedInt(-limit)) lower = IntervalValue::minus_infinity();
+        else if (lower > BoundedInt(limit)) lower = BoundedInt(limit);
+        if (upper > BoundedInt(limit)) upper = IntervalValue::plus_infinity();
+        else if (upper < BoundedInt(-limit)) upper = BoundedInt(-limit);
+        result = result + IntervalValue(lower, upper) * IntervalValue(bytes);
+    }
+    return result;
+}
 /**
  * @brief Detects buffer overflow issues within a given ICFG node.
  *
@@ -59,7 +101,7 @@ void BufOverflowDetector::detect(const ICFGNode* node)
                 const AbstractValue& lhsVal = ae.getAbsValue(gep->getLHSVar(), node);
                 const AbstractValue& rhsVal = ae.getAbsValue(gep->getRHSVar(), node);
                 updateGepObjOffsetFromBase(node, lhsVal.getAddrs(), rhsVal.getAddrs(),
-                                           ae.getGepByteOffset(gep));
+                                           getCheckedGepByteOffset(gep));
 
                 const AddressValue& objAddrs = rhsVal.getAddrs();
                 bool hasUnknownSizeTarget = false;
@@ -103,7 +145,7 @@ void BufOverflowDetector::detect(const ICFGNode* node)
 
                     // Calculate access offset and check for potential overflow
                     IntervalValue accessOffset = getAccessOffset(objId, gep);
-                    if (accessOffset.ub().getIntNumeral() >= size)
+                    if (accessOffset.lb() < BoundedInt(0) || accessOffset.ub() >= BoundedInt(lower))
                     {
                         AEException bug(stmt->toString());
                         addBugToReporter(bug, stmt->getICFGNode(),
@@ -115,7 +157,7 @@ void BufOverflowDetector::detect(const ICFGNode* node)
                 if (hasUnknownSizeTarget)
                     addBugToReporter(AEException(stmt->toString()), node,
                                      {IntervalValue(0, IntervalValue::plus_infinity()),
-                                      ae.getGepByteOffset(gep)});
+                                      getCheckedGepByteOffset(gep)});
             }
         }
     }
@@ -331,16 +373,15 @@ void BufOverflowDetector::detectExtAPI(const CallICFGNode* call)
 IntervalValue BufOverflowDetector::getAccessOffset(SVF::NodeID objId, const SVF::GepStmt* gep)
 {
     SVFIR* svfir = PAG::getPAG();
-    auto& ae = AbstractInterpretation::getAEInstance();
     auto obj = svfir->getSVFVar(objId);
 
     if (SVFUtil::isa<BaseObjVar>(obj))
     {
-        return ae.getGepByteOffset(gep);
+        return getCheckedGepByteOffset(gep);
     }
     else if (SVFUtil::isa<GepObjVar>(obj))
     {
-        return getGepObjOffsetFromBase(SVFUtil::cast<GepObjVar>(obj)) + ae.getGepByteOffset(gep);
+        return getGepObjOffsetFromBase(SVFUtil::cast<GepObjVar>(obj)) + getCheckedGepByteOffset(gep);
     }
     else
     {
@@ -410,9 +451,8 @@ void BufOverflowDetector::updateGepObjOffsetFromBase(const SVF::ICFGNode* node, 
                     {
                         IntervalValue objOffsetFromBase =
                             getGepObjOffsetFromBase(objVar);
-                        if (!hasGepObjOffsetFromBase(gepObjVar))
-                            addToGepObjOffsetFromBase(
-                                gepObjVar, objOffsetFromBase + offset);
+                        addToGepObjOffsetFromBase(
+                            gepObjVar, objOffsetFromBase + offset);
                     }
                     else
                     {
@@ -550,7 +590,7 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
             }
         }
 
-        IntervalValue offset(0);
+        IntervalValue offset = IntervalValue::top();
         // if the object is a GepObjVar, get the offset from the base object
         if (SVFUtil::isa<GepObjVar>(svfir->getSVFVar(objId)))
         {
@@ -563,7 +603,7 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
         }
 
         // if the offset is greater than the size, return false
-        if (offset.ub().getIntNumeral() >= size)
+        if (offset.lb() < BoundedInt(0) || offset.ub() >= BoundedInt(lower))
         {
             report.bufferSize.join_with(IntervalValue(lower, size));
             report.accessOffset.join_with(offset);
