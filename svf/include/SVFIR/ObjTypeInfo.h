@@ -73,8 +73,9 @@ private:
     /// Size of the object or number of elements
     u32_t elemNum;
 
-    /// Byte size of object
-    u32_t byteSize;
+    /// Byte size of object; 0 until set, so isConstantByteSize() is false
+    /// for objects whose size is never recorded (e.g. the black-hole object)
+    u32_t byteSize = 0;
 
     inline void resetTypeForHeapStaticObj(const SVFType* t)
     {
