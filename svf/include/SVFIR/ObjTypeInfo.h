@@ -75,7 +75,7 @@ private:
     u32_t elemNum;
 
     /// Byte size of object
-    u32_t byteSize = 0;
+    u32_t byteSize;
 
     /// Uncapped constant allocation extent for sized stack/global objects.
     /// Separate from byteSize and the field-sensitive memory model.
@@ -94,7 +94,8 @@ public:
     }
 
     /// Constructors
-    ObjTypeInfo(const SVFType* t, u32_t max) : type(t), flags(0), maxOffsetLimit(max), elemNum(max)
+    ObjTypeInfo(const SVFType* t, u32_t max)
+        : type(t), flags(0), maxOffsetLimit(max), elemNum(max), byteSize(0)
     {
         assert(t && "no type information for this object?");
     }
