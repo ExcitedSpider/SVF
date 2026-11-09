@@ -511,15 +511,17 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
     }
 
     const AddressValue& addresses = ptrVal.getAddrs();
-    if (std::any_of(addresses.begin(), addresses.end(), [&](u32_t addr)
-{
-    return svfir->isNullOrBlkObj(ae.getAbsState(node).getIDFromAddr(addr));
-    }))
-    return false;
-
+    BufferOverflowInfo report{IntervalValue::bottom(), IntervalValue::bottom()};
+    bool hasFailingTarget = false;      // a target with a known size fails the check
+    bool hasUnknownSizeTarget = false;  // a null/black-hole target, or one with no allocation site
     for (const auto& addr : addresses)
     {
         NodeID objId = ae.getAbsState(node).getIDFromAddr(addr);
+        if (svfir->isNullOrBlkObj(objId))
+        {
+            hasUnknownSizeTarget = true;
+            continue;
+        }
         u32_t size = 0;
         u32_t lower = 0;
         // if the object is a constant size object, get the size directly
@@ -533,7 +535,10 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
             // if the object is not a constant size object, get the size from the addrStmt
             const ICFGNode* addrNode = svfir->getBaseObject(objId)->getICFGNode();
             if (!addrNode)
-                return false;
+            {
+                hasUnknownSizeTarget = true;
+                continue;
+            }
             for (const SVFStmt* stmt2 : addrNode->getSVFStmts())
             {
                 if (const AddrStmt* addrStmt = SVFUtil::dyn_cast<AddrStmt>(stmt2))
@@ -560,11 +565,15 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
         // if the offset is greater than the size, return false
         if (offset.ub().getIntNumeral() >= size)
         {
-            if (info) *info = {IntervalValue(lower, size), offset};
-            return false;
+            report.bufferSize.join_with(IntervalValue(lower, size));
+            report.accessOffset.join_with(offset);
+            hasFailingTarget = true;
         }
     }
-    return true;
+    // Safe only if every target has a known size and passes the check.
+    const bool unsafe = hasFailingTarget || hasUnknownSizeTarget;
+    if (hasFailingTarget && info) *info = report;
+    return !unsafe;
 }
 
 void NullptrDerefDetector::detect(const ICFGNode* node)
