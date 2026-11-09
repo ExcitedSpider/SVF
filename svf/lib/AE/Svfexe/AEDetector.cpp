@@ -149,8 +149,8 @@ void BufOverflowDetector::detect(const ICFGNode* node)
 
                 const AddressValue& objAddrs = rhsVal.getAddrs();
                 BufferOverflowInfo report{IntervalValue::bottom(), IntervalValue::bottom()};
-                bool unsafe = false;
-                bool hasUnknownSizeTarget = false;
+                bool hasFailingTarget = false;      // a target fails the bounds check
+                bool hasUnknownSizeTarget = false;  // a null/black-hole target
                 for (const auto& addr : objAddrs)
                 {
                     // Null/black-hole objects have no allocation size.
@@ -168,16 +168,17 @@ void BufOverflowDetector::detect(const ICFGNode* node)
                     {
                         report.bufferSize.join_with(size);
                         report.accessOffset.join_with(accessOffset);
-                        unsafe = true;
+                        hasFailingTarget = true;
                     }
                 }
-                // Prefer a concrete failing check. If only targets without an
-                // allocation size remain, report an unbounded size and the
-                // GEP's own byte offset.
-                if (!unsafe && hasUnknownSizeTarget)
+                // Safe only if every target has a known size and passes the check.
+                const bool unsafe = hasFailingTarget || hasUnknownSizeTarget;
+                // Prefer the bounds of the failing targets. Otherwise report an
+                // unbounded size and the GEP's own byte offset.
+                if (!hasFailingTarget)
                     report = {IntervalValue(0, IntervalValue::plus_infinity()),
                               getCheckedGepByteOffset(gep)};
-                if (unsafe || hasUnknownSizeTarget)
+                if (unsafe)
                     addBugToReporter(AEException(stmt->toString()), node, report);
             }
         }
@@ -573,14 +574,14 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
 
     const AddressValue& addresses = ptrVal.getAddrs();
     BufferOverflowInfo report{IntervalValue::bottom(), IntervalValue::bottom()};
-    bool unsafe = false;
-    bool unknown = false;
+    bool hasFailingTarget = false;      // a target fails the bounds check
+    bool hasUnknownSizeTarget = false;  // a null/black-hole target
     for (const auto& addr : addresses)
     {
         NodeID objId = ae.getAbsState(node).getIDFromAddr(addr);
         if (svfir->isNullOrBlkObj(objId))
         {
-            unknown = true;
+            hasUnknownSizeTarget = true;
             continue;
         }
         const auto size = getAllocationSize(objId);
@@ -602,12 +603,15 @@ bool BufOverflowDetector::canSafelyAccessMemory(const ValVar* value, const Inter
         {
             report.bufferSize.join_with(size);
             report.accessOffset.join_with(offset);
-            unsafe = true;
+            hasFailingTarget = true;
         }
     }
-    if (!unsafe && unknown) report = {};
-    if ((unsafe || unknown) && info) *info = report;
-    return !unsafe && !unknown;
+    // Safe only if every target has a known size and passes the check.
+    const bool unsafe = hasFailingTarget || hasUnknownSizeTarget;
+    // Prefer the bounds of the failing targets. Otherwise keep the unknown
+    // size and offset set at the top of this function.
+    if (hasFailingTarget && info) *info = report;
+    return !unsafe;
 }
 
 void NullptrDerefDetector::detect(const ICFGNode* node)
