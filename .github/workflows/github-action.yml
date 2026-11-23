@@ -54,12 +54,24 @@ jobs:
 
       # build-svf
       - name: build-svf
+        env:
+          # Set the TEST_SUITE_REPO repository variable to test against a
+          # Test-Suite fork; a branch there with the same name as this SVF
+          # branch is used when it exists.
+          TEST_SUITE_REPO: ${{ vars.TEST_SUITE_REPO || 'SVF-tools/Test-Suite' }}
+          TEST_SUITE_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           cd $GITHUB_WORKSPACE
           echo $(pwd)
           if [ "${{matrix.sanitizer}}" != "" ]; then export SVF_SANITIZER="${{matrix.sanitizer}}"; fi
           if [ "$RUNNER_OS" == "Linux" ] && [ "${{matrix.sanitizer}}" == "" ] && [ "${{matrix.rtti_mode}}" == "" ]; then export SVF_COVERAGE=1; fi
-          git clone "https://github.com/SVF-tools/Test-Suite.git";
+          TEST_SUITE_URL="https://github.com/${TEST_SUITE_REPO}.git"
+          if git ls-remote --exit-code --heads "$TEST_SUITE_URL" "$TEST_SUITE_BRANCH" >/dev/null 2>&1; then
+            git clone --branch "$TEST_SUITE_BRANCH" "$TEST_SUITE_URL" Test-Suite
+          else
+            git clone "$TEST_SUITE_URL" Test-Suite
+          fi
+          echo "Test-Suite: ${TEST_SUITE_REPO} $(git -C Test-Suite rev-parse --abbrev-ref HEAD) $(git -C Test-Suite rev-parse --short HEAD)"
           source ${{github.workspace}}/build.sh ${{matrix.rtti_mode}}
 
       - name: ctest objtype inference
