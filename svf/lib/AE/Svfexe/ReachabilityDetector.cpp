@@ -114,25 +114,22 @@ bool addVerdict(cJSON* site, AbstractInterpretation& ae,
     {
         const auto condition = hasState ? argumentInterval(ae, call, 0) : std::nullopt;
         cJSON_AddItemToObject(intervals, "condition", intervalJSON(condition));
+        bool equalOperands = true;
         if (kind == CheckKind::Eq)
         {
             const auto lhs = hasState ? argumentInterval(ae, call, 1) : std::nullopt;
             const auto rhs = hasState ? argumentInterval(ae, call, 2) : std::nullopt;
             cJSON_AddItemToObject(intervals, "lhs", intervalJSON(lhs));
             cJSON_AddItemToObject(intervals, "rhs", intervalJSON(rhs));
-            safe = lhs && rhs && lhs->is_numeral() && *lhs == *rhs;
+            equalOperands = lhs && rhs && lhs->is_numeral() && lhs->equals(*rhs);
         }
-        else
-            safe = true;
         if (hasState)
         {
-            const bool mustFail = condition && *condition == IntervalValue(0);
-            safe = safe && condition && *condition == IntervalValue(1);
+            const bool mustFail = condition && condition->equals(IntervalValue(0));
+            safe = equalOperands && condition && condition->equals(IntervalValue(1));
             reason = safe ? "ae-condition-true" : mustFail ?
                      "ae-must-fail-if-reached" : "ae-condition-unknown";
         }
-        else
-            safe = false;
     }
     else if (hasState)
         reason = "ae-reachable";
