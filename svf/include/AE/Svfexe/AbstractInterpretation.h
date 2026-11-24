@@ -208,6 +208,8 @@ public:
     }
 
 protected:
+    void reportReachability(const std::string& path);
+
     /// Factory-only construction.  External callers must use getAEInstance();
     /// `SparseAbstractInterpretation` reaches this via its own ctor.
     AbstractInterpretation();

@@ -32,13 +32,19 @@
 #include "Graphs/PAG.h"
 #include "Util/Options.h"
 #include "Util/WorkList.h"
+#include "Util/cJSON.h"
 #include "Graphs/CallGraph.h"
 #include "WPA/Andersen.h"
 #include <cmath>
+#include <cstdlib>
+#include <fstream>
 #include <memory>
 
 using namespace SVF;
 using namespace SVFUtil;
+
+static const Option<std::string> ReachabilityJson(
+    "ae-reach", "Report reachability verdicts to this JSON file", "");
 
 
 void AbstractInterpretation::runOnModule()
@@ -56,6 +62,123 @@ void AbstractInterpretation::runOnModule()
         stat->performStat();
     for (auto& detector: detectors)
         detector->reportBug();
+    if (!ReachabilityJson().empty())
+        reportReachability(ReachabilityJson());
+}
+
+void AbstractInterpretation::reportReachability(const std::string& path)
+{
+    // A nonempty abstract state is only a may-reach fact. For a definite
+    // violation, require a straight-line path from main with no prior calls.
+    auto onStraightLineFromMain = [&](const ICFGNode* node)
+    {
+        if (Options::AEFunEntry() != MAIN || node->getFun()->getName() != "main")
+            return false;
+        Set<const ICFGNode*> visited;
+        while (!SVFUtil::isa<FunEntryICFGNode>(node))
+        {
+            if (!visited.insert(node).second || node->getInEdges().size() != 1)
+                return false;
+            const auto* edge = SVFUtil::dyn_cast<IntraCFGEdge>(*node->getInEdges().begin());
+            if (!edge || edge->getCondition())
+                return false;
+            const auto* pred = edge->getSrcNode();
+            if (pred->getOutEdges().size() != 1 || SVFUtil::isa<CallICFGNode>(pred))
+                return false;
+            node = pred;
+        }
+        return true;
+    };
+
+    std::unique_ptr<cJSON, decltype(&cJSON_Delete)> results(cJSON_CreateArray(), cJSON_Delete);
+    for (const auto& entry : *icfg)
+    {
+        const auto* call = SVFUtil::dyn_cast<CallICFGNode>(entry.second);
+        if (!call || !call->getCalledFunction())
+            continue;
+        const auto& target = call->getCalledFunction()->getName();
+        const bool assertion = target == "__VERIFIER_assert";
+        // Use the user sites as the reporting unit for the standard wrapper.
+        if (!assertion && (target != "reach_error" || call->getFun()->getName() == "__VERIFIER_assert"))
+            continue;
+
+        const char* verdict = "unknown";
+        const char* reason = "no coverage for this site";
+        if (allAnalyzedNodes.count(call) && hasAbsState(call))
+        {
+            reason = "final state does not establish a definite verdict";
+            if (assertion && call->getNumArgOperands() == 1)
+            {
+                const auto& condition = getAbsValue(call->getArgument(0), call).getInterval();
+                if (!condition.isBottom() && !condition.contains(0))
+                {
+                    verdict = "unreachable";
+                    reason = "final assertion argument excludes zero";
+                }
+                else if (condition.is_numeral() && condition.getNumeral() == 0 &&
+                         onStraightLineFromMain(call))
+                {
+                    verdict = "reachable";
+                    reason = "final assertion argument is zero on a straight-line path from main";
+                }
+            }
+            else if (!assertion && onStraightLineFromMain(call))
+            {
+                verdict = "reachable";
+                reason = "straight-line path from main";
+            }
+        }
+        else if (!call->getInEdges().empty())
+        {
+            // A missing state is only useful if final states explicitly rule
+            // out every incoming edge. An unanalysed predecessor proves nothing.
+            bool blocked = true;
+            for (const auto* incoming : call->getInEdges())
+            {
+                const auto* edge = SVFUtil::dyn_cast<IntraCFGEdge>(incoming);
+                const auto* pred = incoming->getSrcNode();
+                if (!edge || !edge->getCondition() ||
+                    !allAnalyzedNodes.count(pred) || !hasAbsState(pred))
+                {
+                    blocked = false;
+                    break;
+                }
+                const auto& condition = getAbsValue(edge->getCondition(), pred).getInterval();
+                auto state = getAbsState(pred);
+                if (condition.isBottom() || isBranchEdgeFeasible(edge, state))
+                {
+                    blocked = false;
+                    break;
+                }
+            }
+            if (blocked)
+            {
+                verdict = "unreachable";
+                reason = "final predecessor states rule out every incoming edge";
+            }
+        }
+
+        const auto location = call->getSourceLoc();
+        auto* site = cJSON_CreateObject();
+        cJSON_AddItemToArray(results.get(), site);
+        cJSON_AddNumberToObject(site, "node_id", call->getId());
+        cJSON_AddStringToObject(site, "target", target.c_str());
+        cJSON_AddStringToObject(site, "location", location.c_str());
+        cJSON_AddStringToObject(site, "verdict", verdict);
+        cJSON_AddStringToObject(site, "reason", reason);
+        outs() << "AE reachability " << verdict << " at " << location << " (" << reason << ")\n";
+    }
+
+    std::unique_ptr<char, decltype(&cJSON_free)> json(cJSON_Print(results.get()), cJSON_free);
+    std::ofstream file(path);
+    if (json)
+        file << json.get() << '\n';
+    file.close();
+    if (!json || !file)
+    {
+        errs() << "Unable to write AE reachability JSON to " << path << '\n';
+        std::exit(EXIT_FAILURE);
+    }
 }
 
 AbstractInterpretation::AbstractInterpretation()
