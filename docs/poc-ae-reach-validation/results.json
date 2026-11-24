@@ -1,0 +1,702 @@
+[
+  {
+    "task": "longjmp/68-longjmp_04-counting-local_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.052199,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_04-counting-local_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.045011,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_04-counting-local_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.060058,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_07-returns_true.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.044915,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_11-counting-return_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.06492,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_11-counting-return_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.053951,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_11-counting-return_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.044434,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_12-counting-global_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.048166,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_12-counting-global_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.046253,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_12-counting-global_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.050137,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_13-counting-local_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.050198,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_13-counting-local_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.04409,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_13-counting-local_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.05629,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_14-counting-return-one-method_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.056611,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_14-counting-return-one-method_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.052964,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_14-counting-return-one-method_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.052387,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_15-counting-global-one-method_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.045539,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_15-counting-global-one-method_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.044528,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_15-counting-global-one-method_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.054761,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_16-counting-local-one-method_true.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.041145,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_16-counting-local-one-method_unknown_1_neg.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.056815,
+    "failure": null
+  },
+  {
+    "task": "longjmp/68-longjmp_16-counting-local-one-method_unknown_1_pos.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.041164,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/array_2-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.055226,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/array_3-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.049389,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/diamond_1-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.057029,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/functions_1-1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.066614,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/phases_1-1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.039826,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/phases_1-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.052181,
+    "failure": null
+  },
+  {
+    "task": "loop-acceleration/phases_2-1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.042026,
+    "failure": null
+  },
+  {
+    "task": "loop-crafted/simple_array_index_value_1-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.051346,
+    "failure": null
+  },
+  {
+    "task": "loop-invariants/mod4.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.049571,
+    "failure": null
+  },
+  {
+    "task": "loop-invgen/fragtest_simple.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.067202,
+    "failure": null
+  },
+  {
+    "task": "loop-invgen/id_build.i.v+lhb-reducer.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.075102,
+    "failure": null
+  },
+  {
+    "task": "loop-invgen/id_trans.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.088158,
+    "failure": null
+  },
+  {
+    "task": "loop-lit/css2003.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.054065,
+    "failure": null
+  },
+  {
+    "task": "loop-lit/gsv2008.c.i.p+cfa-reducer.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.053309,
+    "failure": null
+  },
+  {
+    "task": "loop-simple/nested_1b.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.045147,
+    "failure": null
+  },
+  {
+    "task": "loop-zilu/benchmark43_conjunctive_abstracted.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.054321,
+    "failure": null
+  },
+  {
+    "task": "loops-crafted-1/Mono1_1-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.037735,
+    "failure": null
+  },
+  {
+    "task": "loops-crafted-1/Mono5_1.yml",
+    "mode": "dense",
+    "verdict": "unreachable",
+    "time_seconds": 0.068463,
+    "failure": null
+  },
+  {
+    "task": "loops-crafted-1/mono-crafted_13.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.059642,
+    "failure": null
+  },
+  {
+    "task": "loops-crafted-1/sumt6.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.059653,
+    "failure": null
+  },
+  {
+    "task": "loops/invert_string-3.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.080935,
+    "failure": null
+  },
+  {
+    "task": "loops/lu.cmp.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.169642,
+    "failure": null
+  },
+  {
+    "task": "loops/matrix-2-2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.110907,
+    "failure": null
+  },
+  {
+    "task": "loops/n.c11.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.038693,
+    "failure": null
+  },
+  {
+    "task": "loops/trex03-1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.051305,
+    "failure": null
+  },
+  {
+    "task": "loops/while_infinite_loop_4.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.047041,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/bresenham-ll_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.112168,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/bresenham-ll_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.074218,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/bresenham-ll_unwindbound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.072287,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/bresenham-ll_valuebound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.078715,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/cohencu-ll_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.120442,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/cohencu-ll_unwindbound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.12795,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/cohencu-ll_unwindbound50.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.121907,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/cohendiv-ll_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.101654,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/dijkstra-u_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.063433,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/dijkstra-u_valuebound50.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.142505,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/divbin2_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.081653,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd-ll_valuebound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.089141,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd2-ll_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.500759,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd2-ll_valuebound5.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.337221,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd3-ll_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.653832,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd3-ll_unwindbound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 1.021083,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd3-ll_unwindbound5.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.863232,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/egcd3-ll_unwindbound50.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.94814,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/fermat2-ll_valuebound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.081771,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-ll_valuebound5.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.059908,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-ll_valuebound50.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.071023,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-u_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.059823,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-u_valuebound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.058379,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-u_valuebound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.057907,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo1-u_valuebound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.070345,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/geo3-ll_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.067579,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/hard-ll_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.102308,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/hard-u_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.087492,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/hard-u_unwindbound50.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.088684,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/knuth_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.117236,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/knuth_unwindbound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.148817,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/knuth_valuebound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.110785,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/knuth_valuebound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.116564,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/knuth_valuebound5.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.15324,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/lcm1_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.143214,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/lcm1_valuebound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.112514,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/mannadiv_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.068445,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/mannadiv_valuebound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.06655,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/prod4br-ll_unwindbound100.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.08124,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/prod4br-ll_valuebound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.084985,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/prodbin-ll_unwindbound2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.058936,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/ps2-ll_valuebound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.067302,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/ps5-ll_unwindbound1.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.082799,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/ps5-ll_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.068806,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/ps6-ll_unwindbound20.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.0674,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/ps6-ll_valuebound5.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.097321,
+    "failure": null
+  },
+  {
+    "task": "nla-digbench-scaling/sqrt1-ll_unwindbound10.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.08101,
+    "failure": null
+  },
+  {
+    "task": "unsignedintegeroverflow-sas23/bilinear_interpolation.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.064268,
+    "failure": null
+  },
+  {
+    "task": "unsignedintegeroverflow-sas23/cancel_var_through_overflow.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.053471,
+    "failure": null
+  },
+  {
+    "task": "unsignedintegeroverflow-sas23/distance_through_overflow.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.04278,
+    "failure": null
+  },
+  {
+    "task": "unsignedintegeroverflow-sas23/linear_interpolation.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.048315,
+    "failure": null
+  },
+  {
+    "task": "unsignedintegeroverflow-sas23/linear_interpolation_2.yml",
+    "mode": "dense",
+    "verdict": "unknown",
+    "time_seconds": 0.055446,
+    "failure": null
+  }
+]
