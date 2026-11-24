@@ -8,6 +8,24 @@ target_link_libraries(SvfCore PUBLIC SvfFlags)
 file(GLOB_RECURSE SVF_CORE_HEADERS ${CMAKE_CURRENT_LIST_DIR}/include/*.h)
 file(GLOB_RECURSE SVF_CORE_SOURCES ${CMAKE_CURRENT_LIST_DIR}/lib/*.cpp)
 
+set(SVF_REACH_COMMIT "" CACHE STRING "Git revision for AE reachability reports")
+if(NOT SVF_REACH_COMMIT)
+  execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    OUTPUT_VARIABLE SVF_REACH_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+endif()
+if(NOT SVF_REACH_COMMIT)
+  set(SVF_REACH_COMMIT "unknown")
+endif()
+set_source_files_properties(
+  lib/AE/Svfexe/ReachabilityDetector.cpp
+  PROPERTIES COMPILE_DEFINITIONS "SVF_REACH_BUILD_COMMIT=\"${SVF_REACH_COMMIT}\""
+)
+
 if(MSVC AND NOT BUILD_SHARED_LIBS)
   list(SORT SVF_CORE_SOURCES)
   list(LENGTH SVF_CORE_SOURCES SVF_CORE_SOURCE_COUNT)

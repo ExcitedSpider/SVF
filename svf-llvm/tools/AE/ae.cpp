@@ -34,6 +34,7 @@
 #include "AE/Core/RelExeState.h"
 #include "AE/Core/RelationSolver.h"
 #include "AE/Svfexe/AbstractInterpretation.h"
+#include "AE/Svfexe/ReachabilityDetector.h"
 #include <chrono>
 #include <limits>
 
@@ -51,6 +52,12 @@ static Option<bool> AETEST(
     "aetest",
     "abstract execution basic function test",
     false
+);
+
+static Option<std::string> AEReach(
+    "ae-reach",
+    "write an AE reachability report to this JSON file",
+    ""
 );
 
 class SymblicAbstractionTest
@@ -971,6 +978,8 @@ int main(int argc, char** argv)
         ae.addDetector(std::make_unique<BufOverflowDetector>());
     if (Options::NullDerefCheck())
         ae.addDetector(std::make_unique<NullptrDerefDetector>());
+    if (!AEReach().empty())
+        ae.addDetector(std::make_unique<ReachabilityDetector>(ae, AEReach(), argc, argv));
     ae.runOnModule();
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
