@@ -34,6 +34,7 @@
 #include "AE/Core/RelExeState.h"
 #include "AE/Core/RelationSolver.h"
 #include "AE/Svfexe/AbstractInterpretation.h"
+#include "Reachability.h"
 #include <chrono>
 #include <limits>
 
@@ -924,6 +925,7 @@ public:
 
 int main(int argc, char** argv)
 {
+    Reachability reach(argc, argv);
     int arg_num = 0;
     int extraArgc = 3;
     char **arg_value = new char *[argc + extraArgc];
@@ -959,7 +961,8 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
+    if (!reach.buildModule(moduleNameVec))
+        LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     PAGBuilder builder;
     PAG* pag = builder.build();
     // Run Andersen's to resolve indirect calls, then update PAG with resolved targets.
@@ -972,9 +975,10 @@ int main(int argc, char** argv)
     if (Options::NullDerefCheck())
         ae.addDetector(std::make_unique<NullptrDerefDetector>());
     ae.runOnModule();
+    const bool reportWritten = reach.writeReport(ae);
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
     LLVMModuleSet::releaseLLVMModuleSet();
 
-    return 0;
+    return reportWritten ? 0 : 2;
 }
