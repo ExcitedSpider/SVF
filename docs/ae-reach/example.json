@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "tool": "ae-reach",
+  "tool_commit": "27809c5f2dbf74552dadfe3e017fa1a48f45f572",
+  "svf_commit": "a8a0f5181748059c2df2281e5e4ada63ccda3832",
+  "mode": "dense",
+  "command": [
+    "/work/native-build/bin/ae",
+    "-ae-reach=/work/runs-final/cases/c06_stop/dense.json",
+    "-ae-sparsity=dense",
+    "-stat=false",
+    "/work/runs-final/cases/c06_stop/input.ll"
+  ],
+  "status": "ok",
+  "seconds": 0.009974711,
+  "peak_kib": 24680,
+  "sites": [
+    {
+      "location": {
+        "file": "/e/cases/c06_stop.c",
+        "line": 4,
+        "column": 5,
+        "function": "main"
+      },
+      "kind": "assert",
+      "verdict": "unsafe",
+      "coverage": [
+        "closed direct-call CFG traversal from main"
+      ],
+      "depends_on": [],
+      "abstract_values": {
+        "condition": "[-oo, +oo]"
+      },
+      "ae_state_present": true,
+      "reason": "confirmed-concrete-violation",
+      "witness": [
+        0
+      ],
+      "replay": {
+        "exit_code": 99,
+        "line": 4
+      }
+    },
+    {
+      "location": {
+        "file": "/e/cases/c06_stop.c",
+        "line": 5,
+        "column": 5,
+        "function": "main"
+      },
+      "kind": "assert",
+      "verdict": "safe",
+      "coverage": [
+        "closed direct-call CFG traversal from main"
+      ],
+      "depends_on": [
+        4
+      ],
+      "abstract_values": {
+        "condition": "[-oo, +oo]"
+      },
+      "ae_state_present": true,
+      "reason": "dominating-predicate"
+    }
+  ],
+  "verdict": "unsafe",
+  "task": "c06_stop",
+  "suite": "cases",
+  "stock_status": "ok",
+  "replay_audit": {
+    "checks": 228,
+    "counterexamples": 0
+  }
+}

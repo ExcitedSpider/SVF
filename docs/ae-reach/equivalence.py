@@ -9,7 +9,15 @@ import resource
 import subprocess
 import tempfile
 
-from run import MODES, execute, save
+from run import MODES, save
+
+
+def capture(command, cwd):
+    try:
+        result = subprocess.run(command, cwd=cwd, capture_output=True, timeout=120)
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired as timeout:
+        return 124, timeout.stdout or b"", timeout.stderr or b""
 
 
 def main():
@@ -42,8 +50,8 @@ def main():
         ir, mode, opts = run
         command = ["-ae-sparsity=" + mode, "-stat=false", *opts, str(ir)]
         with tempfile.TemporaryDirectory(prefix="ae-equivalence-") as scratch:
-            left = execute([args.stock, *command], cwd=scratch)[:3]
-            right = execute([args.native, *command], cwd=scratch)[:3]
+            left = capture([args.stock, *command], cwd=scratch)
+            right = capture([args.native, *command], cwd=scratch)
         if left != right:
             def decoded(result):
                 return [result[0], *(data.decode(errors="backslashreplace")[:12000] for data in result[1:])]
