@@ -22,7 +22,9 @@
 #include <map>
 #include <optional>
 #include <set>
+#if defined(__linux__)
 #include <sys/resource.h>
+#endif
 
 using namespace SVF;
 
@@ -49,8 +51,10 @@ bool terminates(llvm::StringRef name)
 
 bool nondet(llvm::StringRef name)
 {
-    return name.starts_with("verifier_nondet_") ||
-           name.starts_with("__VERIFIER_nondet_");
+    return name.starts_with("__VERIFIER_nondet_") ||
+           name == "verifier_nondet_int" || name == "verifier_nondet_uint" ||
+           name == "verifier_nondet_llong" || name == "verifier_nondet_char" ||
+           name == "verifier_nondet_bool";
 }
 
 llvm::Value* condition(llvm::CallBase& call)
@@ -250,7 +254,7 @@ struct Reachability::Run
     Coverage withoutStops;
     std::set<const llvm::CallBase*> proven;
     std::set<const llvm::CallBase*> literal;
-    std::map<const llvm::CallBase*, std::set<unsigned>> dependencies;
+    std::map<const llvm::CallBase*, std::vector<const Site*>> dependencies;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 };
 
@@ -329,7 +333,7 @@ bool Reachability::buildModule(const std::vector<std::string>& inputs)
                 continue;
             if (earlier.call->getFunction() == site.call->getFunction() &&
                 llvm::isPotentiallyReachable(earlier.call, site.call))
-                run->dependencies[site.call].insert(earlier.line);
+                run->dependencies[site.call].push_back(&earlier);
         }
     for (const auto& entry : refinements)
         refine(*entry.first, entry.second);
@@ -386,9 +390,11 @@ bool Reachability::writeReport(AbstractInterpretation& ae) const
     cJSON_AddStringToObject(report, "status", "ok");
     cJSON_AddNumberToObject(report, "seconds",
                           std::chrono::duration<double>(std::chrono::steady_clock::now() - run->start).count());
+#if defined(__linux__)
     struct rusage usage {};
     if (getrusage(RUSAGE_SELF, &usage) == 0)
         cJSON_AddNumberToObject(report, "peak_kib", usage.ru_maxrss);
+#endif
 
     bool allSafe = !run->sites.empty();
     auto* sites = cJSON_AddArrayToObject(report, "sites");
@@ -417,13 +423,15 @@ bool Reachability::writeReport(AbstractInterpretation& ae) const
         auto* dependencies = cJSON_AddArrayToObject(row, "depends_on");
         if (!literal && (!dead || run->withoutStops.visited.count(site.call)))
             if (const auto it = run->dependencies.find(site.call); it != run->dependencies.end())
-                for (unsigned line : it->second)
-                {
-                    const auto proven = std::find_if(run->sites.begin(), run->sites.end(),
-                        [&](const Site& earlier) { return earlier.line == line && run->literal.count(earlier.call); });
-                    if (proven == run->sites.end())
-                        cJSON_AddItemToArray(dependencies, cJSON_CreateNumber(line));
-                }
+            {
+                std::set<unsigned> lines;
+                for (const auto* earlier : it->second)
+                    if (!closed || (run->coverage.visited.count(earlier->call) &&
+                                    !run->literal.count(earlier->call) && !run->proven.count(earlier->call)))
+                        lines.insert(earlier->line);
+                for (const auto line : lines)
+                    cJSON_AddItemToArray(dependencies, cJSON_CreateNumber(line));
+            }
         auto* values = cJSON_AddObjectToObject(row, "abstract_values");
         const auto* node = modules->getICFGNode(site.call);
         const bool hasState = ae.hasAbsState(node);

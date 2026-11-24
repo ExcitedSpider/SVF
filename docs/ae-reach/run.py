@@ -200,11 +200,14 @@ def replay(prepared, reports):
 
 def verify(report):
     assert report["schema_version"] == 1 and report["tool"] == "ae-reach"
-    assert all(isinstance(report[key], str) for key in ("tool_commit", "svf_commit", "task"))
+    assert all(isinstance(report[key], str) for key in ("tool_commit", "task"))
+    assert report["svf_commit"] == BASE
     assert report["suite"] in {"cases", "svcomp"} and report["mode"] in MODES
     assert all(isinstance(arg, str) for arg in report["command"]) and report["command"]
     assert report["status"] in {"ok", "crash", "timeout", "error"}
+    assert report["stock_status"] in {"ok", "crash", "timeout", "error"}
     assert report["seconds"] >= 0
+    assert "peak_kib" not in report or report["peak_kib"] >= 0
     if report["status"] != "ok":
         assert not report["sites"] and report["verdict"] == "error"
         return
@@ -216,6 +219,7 @@ def verify(report):
         assert all(isinstance(site["location"][key], int) for key in ("line", "column"))
         assert all(isinstance(line, int) for line in site["depends_on"])
         assert all(isinstance(fact, str) for fact in site["coverage"])
+        assert isinstance(site["ae_state_present"], bool)
         keys = {"condition", "left", "right"} if site["kind"] == "eq" else (
             {"condition"} if site["kind"] == "assert" else set())
         assert set(site["abstract_values"]) == keys
