@@ -99,15 +99,9 @@ u32_t AccessPath::getElementNum(const SVFType* type) const
 //  then the return byte offset is 16 Bytes.
 u32_t AccessPath::getStructFieldOffset(const ValVar* idxOperandVar, const SVFStructType* idxOperandType) const
 {
-    u32_t structByteOffset = 0;
     if (const ConstIntValVar*op = SVFUtil::dyn_cast<ConstIntValVar>(idxOperandVar))
     {
-        for (u32_t structField = 0; structField < (u32_t) op->getSExtValue(); ++structField)
-        {
-            u32_t flattenIdx = idxOperandType->getTypeInfo()->getFlattenedFieldIdxVec()[structField];
-            structByteOffset += idxOperandType->getTypeInfo()->getOriginalElemType(flattenIdx)->getByteSize();
-        }
-        return structByteOffset;
+        return idxOperandType->getFieldByteOffset(op->getSExtValue());
     }
     else
     {
@@ -165,12 +159,7 @@ APOffset AccessPath::computeConstantByteOffset() const
             ///   structField = 0, flattenIdx = 0, type2: int
             ///   structField = 1, flattenIdx = 1, type2: char[10]
             ///   structField = 2, flattenIdx = 11, type2: int[5]
-            for (u32_t structField = 0; structField < (u32_t)op->getSExtValue(); ++structField)
-            {
-                u32_t flattenIdx = structType->getTypeInfo()->getFlattenedFieldIdxVec()[structField];
-                type2 = structType->getTypeInfo()->getOriginalElemType(flattenIdx);
-                totalConstOffset += type2->getByteSize();
-            }
+            totalConstOffset += getStructFieldOffset(var, structType);
         }
         else
         {
@@ -179,7 +168,6 @@ APOffset AccessPath::computeConstantByteOffset() const
             totalConstOffset += op->getSExtValue() * type2->getByteSize();
         }
     }
-    totalConstOffset = Options::MaxFieldLimit() > totalConstOffset? totalConstOffset: Options::MaxFieldLimit();
     return totalConstOffset;
 }
 

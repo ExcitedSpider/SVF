@@ -921,8 +921,6 @@ void SymbolTableBuilder::initTypeInfo(ObjTypeInfo* typeinfo, const Value* val,
 
     // set ByteSize. If ByteSize > 0, this typeinfo has constant type.
     // If ByteSize == 0, this typeinfo has 1) zero byte 2) non-const byte size
-    // If ByteSize>MaxFieldLimit, set MaxFieldLimit to the byteSize;
-    byteSize = Options::MaxFieldLimit() > byteSize? byteSize: Options::MaxFieldLimit();
     typeinfo->setByteSizeOfObj(byteSize);
 }
 

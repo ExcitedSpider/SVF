@@ -262,9 +262,6 @@ IntervalValue AbstractInterpretation::getGepElementIndex(const GepStmt* gep)
 IntervalValue AbstractInterpretation::getGepByteOffset(const GepStmt* gep)
 {
     const ICFGNode* node = gep->getICFGNode();
-    if (gep->isConstantOffset())
-        return IntervalValue((s64_t)gep->accumulateConstantByteOffset());
-
     IntervalValue res(0);
     for (int i = gep->getOffsetVarAndGepTypePairVec().size() - 1; i >= 0; i--)
     {
@@ -283,10 +280,7 @@ IntervalValue AbstractInterpretation::getGepByteOffset(const GepStmt* gep)
 
             if (const ConstIntValVar* op = SVFUtil::dyn_cast<ConstIntValVar>(idxOperandVar))
             {
-                s64_t lb = (double)Options::MaxFieldLimit() / elemByteSize >= op->getSExtValue()
-                           ? op->getSExtValue() * elemByteSize
-                           : Options::MaxFieldLimit();
-                res = res + IntervalValue(lb, lb);
+                res = res + IntervalValue(op->getSExtValue()) * IntervalValue(elemByteSize);
             }
             else
             {
@@ -295,15 +289,7 @@ IntervalValue AbstractInterpretation::getGepByteOffset(const GepStmt* gep)
                     res = res + IntervalValue(0, 0);
                 else
                 {
-                    s64_t ub = (idxVal.ub().getIntNumeral() < 0) ? 0
-                               : (double)Options::MaxFieldLimit() / elemByteSize >= idxVal.ub().getIntNumeral()
-                               ? elemByteSize * idxVal.ub().getIntNumeral()
-                               : Options::MaxFieldLimit();
-                    s64_t lb = (idxVal.lb().getIntNumeral() < 0) ? 0
-                               : (double)Options::MaxFieldLimit() / elemByteSize >= idxVal.lb().getIntNumeral()
-                               ? elemByteSize * idxVal.lb().getIntNumeral()
-                               : Options::MaxFieldLimit();
-                    res = res + IntervalValue(lb, ub);
+                    res = res + idxVal * IntervalValue(elemByteSize);
                 }
             }
         }

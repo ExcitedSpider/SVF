@@ -1333,6 +1333,14 @@ SVFType* LLVMModuleSet::addSVFTypeInfo(const Type* T)
             fieldTypes.push_back(getSVFType(t));
         }
         auto svfst = new SVFStructType(id, fieldTypes, byteSize);
+        if (st->isSized())
+        {
+            const auto* layout = getMainLLVMModule()->getDataLayout().getStructLayout(const_cast<StructType*>(st));
+            std::vector<u32_t> offsets;
+            for (u32_t i = 0; i < st->getNumElements(); ++i)
+                offsets.push_back(layout->getElementOffset(i));
+            svfst->setFieldByteOffsets(std::move(offsets));
+        }
         if (st->hasName())
             svfst->setName(st->getName().str());
         svftype = svfst;

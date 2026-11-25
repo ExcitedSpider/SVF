@@ -436,6 +436,7 @@ private:
     /// @brief Field for printing & debugging
     std::string name;
     std::vector<const SVFType*> fields;
+    std::vector<u32_t> fieldByteOffsets;
 
 public:
     SVFStructType(u32_t i, std::vector<const SVFType *> &f, u32_t byteSize = 1) :
@@ -467,6 +468,16 @@ public:
     const std::vector<const SVFType*>& getFieldTypes() const
     {
         return fields;
+    }
+
+    void setFieldByteOffsets(std::vector<u32_t> offsets)
+    {
+        fieldByteOffsets = std::move(offsets);
+    }
+
+    u32_t getFieldByteOffset(u32_t index) const
+    {
+        return fieldByteOffsets.at(index);
     }
 
 };
